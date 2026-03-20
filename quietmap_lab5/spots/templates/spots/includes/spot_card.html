@@ -4,5 +4,5 @@
     <p>{{ spot.content|truncatechars:85 }}</p>
     <p>Шум: {% noise_badge spot.noise_level %}</p>
     <p>Район: <a href="{% url 'area' spot.area_slug %}">{{ spot.area }}</a></p>
-    <p><a href="{% url 'archive' spot.time_create|date:'Y' %}">Архив до {{ spot.time_create|date:"Y" }}</a></p>
+    <p><a href="{% url 'archive' spot.time_create.year %}">Архив до {{ spot.time_create|date:"Y" }}</a></p>
 </li>

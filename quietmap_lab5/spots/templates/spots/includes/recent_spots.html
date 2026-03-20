@@ -3,8 +3,8 @@
     <ul class="recent-list">
         {% for spot in recent_spots %}
             <li>
-                <a href="{% url 'spot_detail' spot.id %}">{{ spot.name }}</a>
-                <span class="muted">({{ spot.added_year }})</span>
+                <a href="{{ spot.get_absolute_url }}">{{ spot.title }}</a>
+                <span class="muted">({{ spot.time_create|date:"Y" }})</span>
             </li>
         {% empty %}
             <li class="muted">Нет данных.</li>
