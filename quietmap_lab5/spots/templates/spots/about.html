@@ -1,0 +1,9 @@
+{% extends "spots/base.html" %}
+{% load spots_tags %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <p>{{ project_description }}</p>
+    <p class="muted">Пример фильтра: "{{ title|lower }}"</p>
+    {% show_recent_spots %}
+{% endblock %}

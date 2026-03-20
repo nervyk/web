@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default:"Карта тихих мест" }}</title>
+    <link rel="stylesheet" href="{% static 'spots/css/style.css' %}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <h1 class="logo">Карта тихих мест</h1>
+        <nav>
+            {% include "spots/includes/menu.html" %}
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <p>Учебный Django-проект, {{ current_year }}</p>
+</footer>
+</body>
+</html>

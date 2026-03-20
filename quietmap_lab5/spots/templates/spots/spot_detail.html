@@ -1,0 +1,13 @@
+{% extends "spots/base.html" %}
+{% load spots_tags %}
+
+{% block content %}
+    <article class="spot-card {{ spot.noise_level|noise_class }}">
+        <h2>{{ spot.title }}</h2>
+        <p>{{ spot.content }}</p>
+        <p>Уровень шума: {% noise_badge spot.noise_level %}</p>
+        <p>Район: <a href="{% url 'area' spot.area_slug %}">{{ spot.area }}</a></p>
+        <p>Год добавления: {{ spot.time_create|date:"Y" }}</p>
+        <p><a href="{% url 'home' %}">Вернуться на главную</a></p>
+    </article>
+{% endblock %}

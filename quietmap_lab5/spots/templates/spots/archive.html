@@ -1,0 +1,22 @@
+{% extends "spots/base.html" %}
+{% load spots_tags %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <p class="muted">Найдено мест: {{ spots|length }}</p>
+
+    {% if spots %}
+        <ul class="cards">
+            {% for spot in spots %}
+                <li class="card {{ spot.noise_level|noise_class }}">
+                    <h3><a href="{{ spot.get_absolute_url }}">{{ spot.title }}</a></h3>
+                    <p>Район: {{ spot.area }}</p>
+                    <p>Шум: {% noise_badge spot.noise_level %}</p>
+                    <p>Год: {{ spot.time_create|date:"Y" }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>За выбранный период данных нет.</p>
+    {% endif %}
+{% endblock %}

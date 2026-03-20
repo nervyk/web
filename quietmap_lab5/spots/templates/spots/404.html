@@ -1,0 +1,7 @@
+{% extends "spots/base.html" %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <p>Путь <code>{{ requested_path }}</code> не найден.</p>
+    <p><a href="{% url 'home' %}">Перейти на главную страницу</a></p>
+{% endblock %}

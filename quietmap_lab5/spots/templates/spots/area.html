@@ -1,0 +1,27 @@
+{% extends "spots/base.html" %}
+{% load spots_tags %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+
+    {% if filters.noise %}
+        <p class="muted">Активный фильтр шума: {% noise_badge filters.noise %}</p>
+    {% else %}
+        <p class="muted">Фильтр шума не выбран.</p>
+    {% endif %}
+
+    {% if filters.time %}
+        <p class="muted">Время посещения: {{ filters.time }}</p>
+    {% endif %}
+
+    <ul class="cards">
+        {% for spot in spots %}
+            <li class="card {{ spot.noise_level|noise_class }}">
+                <h3><a href="{{ spot.get_absolute_url }}">{{ spot.title }}</a></h3>
+                <p>{{ spot.content }}</p>
+            </li>
+        {% empty %}
+            <li class="card">По этому фильтру мест нет.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

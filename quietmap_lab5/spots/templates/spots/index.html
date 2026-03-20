@@ -1,0 +1,16 @@
+{% extends "spots/base.html" %}
+{% load spots_tags %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <p class="muted">Всего мест: {{ stats.all }} | Районов: {{ stats.areas }}</p>
+    {% show_recent_spots 3 %}
+
+    <ul class="cards">
+        {% for spot in spots %}
+            {% include "spots/includes/spot_card.html" with spot=spot %}
+        {% empty %}
+            <li class="card">Пока нет данных.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
