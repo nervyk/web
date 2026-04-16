@@ -1,0 +1,19 @@
+{% extends "spots/base.html" %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <p class="muted">Нажмите на тег, чтобы открыть связанные места.</p>
+
+    <section class="recent">
+        <ul class="tag-cloud">
+            {% for tag in tags %}
+                <li>
+                    <a class="tag-chip" href="{{ tag.get_absolute_url }}">{{ tag.name }}</a>
+                    <span class="muted">({{ tag.total }})</span>
+                </li>
+            {% empty %}
+                <li class="muted">Пока нет тегов с привязанными местами.</li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endblock %}

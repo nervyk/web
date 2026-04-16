@@ -1,4 +1,4 @@
-# quietmap_lab5 (ЛР5 Django)
+# quietmap (ЛР5-ЛР8 Django)
 
 Тема: **Карта тихих мест**.
 
@@ -13,12 +13,17 @@ python manage.py runserver
 ```
 
 ## Проверка маршрутов
-- `/` — главная
-- `/spots/3/` — динамический int
-- `/areas/centr/?time=morning&noise=low` — slug + GET (GET печатается в консоль)
-- `/archive/2020/` — собственный конвертер year4 (4 цифры)
-- `/archive/2026/` — redirect на главную по имени маршрута `home`
-- `/archive404/2026/` — генерация Http404 (работает с handler404 при DEBUG=False)
+- `/` — главная страница с данными из БД
+- `/spots/kovorking-na-krasnom/` — детальная страница по slug
+- `/areas/center/?noise=high&tag=noise-high&sort=new` — фильтрация и сортировка в вебе
+- `/categories/center/` — выборка по категории (ForeignKey)
+- `/tags/` и `/tags/reading/` — теги и страницы тегов (ManyToMany)
+- `/archive/2024/` — архив с кастомным year-конвертером
+- `/archive404/2099/` — генерация Http404
+
+## Демонстрационные команды
+- `python manage.py demo_spot_crud` — CRUD (ЛР7)
+- `python manage.py demo_lab8_queries` — Q/F/Value, annotate, aggregate, группировка, DB functions (ЛР8)
 
 ## Кастомный 404
 В `quietmap/settings.py` временно:

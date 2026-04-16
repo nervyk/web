@@ -1,6 +1,7 @@
 from django import template
+from django.db.models import Count
 
-from spots.models import Spot
+from spots.models import Category, Spot, Tag
 
 register = template.Library()
 
@@ -33,5 +34,21 @@ def noise_class(level: str) -> str:
 
 @register.inclusion_tag("spots/includes/recent_spots.html")
 def show_recent_spots(limit: int = 2) -> dict:
-    recent = Spot.published.order_by("-time_create")[:limit]
+    recent = (
+        Spot.published.select_related("category")
+        .prefetch_related("tags")
+        .order_by("-time_create")[:limit]
+    )
     return {"recent_spots": recent}
+
+
+@register.inclusion_tag("spots/includes/list_categories.html")
+def show_categories() -> dict:
+    categories = Category.objects.annotate(total=Count("spots")).filter(total__gt=0).order_by("name")
+    return {"categories": categories}
+
+
+@register.inclusion_tag("spots/includes/list_tags.html")
+def show_all_tags(limit: int = 12) -> dict:
+    tags = Tag.objects.annotate(total=Count("spots")).filter(total__gt=0).order_by("-total", "name")[:limit]
+    return {"tags": tags}

@@ -4,5 +4,16 @@
     <p>{{ spot.content|truncatechars:85 }}</p>
     <p>Шум: {% noise_badge spot.noise_level %}</p>
     <p>Район: <a href="{% url 'area' spot.area_slug %}">{{ spot.area }}</a></p>
+    <p>Категория: <a href="{{ spot.category.get_absolute_url }}">{{ spot.category.name }}</a></p>
+    {% with spot_tags=spot.tags.all %}
+        {% if spot_tags %}
+            <p class="tag-list">
+                Теги:
+                {% for tag in spot_tags %}
+                    <a class="tag-chip" href="{{ tag.get_absolute_url }}">{{ tag.name }}</a>
+                {% endfor %}
+            </p>
+        {% endif %}
+    {% endwith %}
     <p><a href="{% url 'archive' spot.time_create.year %}">Архив до {{ spot.time_create|date:"Y" }}</a></p>
 </li>

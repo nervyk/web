@@ -9,6 +9,38 @@ class PublishedSpotManager(models.Manager):
         )
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=100, db_index=True, verbose_name="Категория")
+    slug = models.SlugField(max_length=120, unique=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Категория"
+        verbose_name_plural = "Категории"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("category", kwargs={"category_slug": self.slug})
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=80, db_index=True, verbose_name="Тег")
+    slug = models.SlugField(max_length=120, unique=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Тег"
+        verbose_name_plural = "Теги"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("tag", kwargs={"tag_slug": self.slug})
+
+
 class Spot(models.Model):
     class NoiseLevel(models.IntegerChoices):
         LOW = 1, "Низкий"
@@ -24,6 +56,12 @@ class Spot(models.Model):
     content = models.TextField(blank=True, verbose_name="Описание")
     area = models.CharField(max_length=120, verbose_name="Район")
     area_slug = models.SlugField(max_length=120, db_index=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        related_name="spots",
+        verbose_name="Категория",
+    )
     noise_level = models.PositiveSmallIntegerField(
         choices=NoiseLevel.choices,
         default=NoiseLevel.MEDIUM,
@@ -36,6 +74,12 @@ class Spot(models.Model):
         default=PublicationStatus.PUBLISHED,
         db_index=True,
         verbose_name="Статус публикации",
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name="spots",
+        verbose_name="Теги",
     )
 
     objects = models.Manager()
@@ -56,3 +100,30 @@ class Spot(models.Model):
 
     def get_absolute_url(self):
         return reverse("spot_detail", kwargs={"spot_slug": self.slug})
+
+
+class SpotDetail(models.Model):
+    spot = models.OneToOneField(
+        Spot,
+        on_delete=models.CASCADE,
+        related_name="detail",
+        verbose_name="Место",
+    )
+    seats = models.PositiveSmallIntegerField(default=12, verbose_name="Количество мест")
+    has_wifi = models.BooleanField(default=True, verbose_name="Есть Wi-Fi")
+    avg_stay_minutes = models.PositiveIntegerField(
+        default=90,
+        verbose_name="Средняя длительность посещения, мин",
+    )
+    work_hours = models.CharField(
+        max_length=40,
+        default="08:00-22:00",
+        verbose_name="Режим работы",
+    )
+
+    class Meta:
+        verbose_name = "Детали места"
+        verbose_name_plural = "Детали мест"
+
+    def __str__(self):
+        return f"Детали: {self.spot.title}"

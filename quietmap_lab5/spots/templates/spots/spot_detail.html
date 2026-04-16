@@ -7,7 +7,31 @@
         <p>{{ spot.content }}</p>
         <p>Уровень шума: {% noise_badge spot.noise_level %}</p>
         <p>Район: <a href="{% url 'area' spot.area_slug %}">{{ spot.area }}</a></p>
+        <p>Категория: <a href="{{ spot.category.get_absolute_url }}">{{ spot.category.name }}</a></p>
+        <p>Режим работы: {{ spot.detail.work_hours }}</p>
+        <p>Посадочных мест: {{ spot.detail.seats }}</p>
+        <p>Средняя длительность посещения: {{ spot.detail.avg_stay_minutes }} мин.</p>
+        <p>Wi-Fi: {% if spot.detail.has_wifi %}да{% else %}нет{% endif %}</p>
+        <p class="tag-list">
+            Теги:
+            {% for tag in spot.tags.all %}
+                <a class="tag-chip" href="{{ tag.get_absolute_url }}">{{ tag.name }}</a>
+            {% empty %}
+                <span class="muted">нет тегов</span>
+            {% endfor %}
+        </p>
         <p>Год добавления: {{ spot.time_create|date:"Y" }}</p>
         <p><a href="{% url 'home' %}">Вернуться на главную</a></p>
     </article>
+
+    {% if related_spots %}
+        <section class="recent">
+            <h3>Похожие места в категории «{{ spot.category.name }}»</h3>
+            <ul class="recent-list">
+                {% for item in related_spots %}
+                    <li><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
 {% endblock %}

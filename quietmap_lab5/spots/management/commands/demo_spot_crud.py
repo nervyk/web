@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from spots.models import Spot
+from spots.models import Category, Spot, SpotDetail, Tag
 
 
 class Command(BaseCommand):
@@ -10,18 +10,60 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        category, _ = Category.objects.get_or_create(
+            slug="lab7-temp-category",
+            defaults={"name": "Техническая категория"},
+        )
+        tag, _ = Tag.objects.get_or_create(
+            slug="lab7-temp-tag",
+            defaults={"name": "Технический тег"},
+        )
+
         self.stdout.write(self.style.MIGRATE_HEADING("== DEMO: CREATE =="))
-        Spot.objects.filter(slug="lab7-crud-temp").delete()
+        Spot.objects.filter(slug__in=["lab7-crud-temp", "lab7-crud-temp-2"]).delete()
         spot = Spot.objects.create(
             title="Тестовая локация ЛР7",
             slug="lab7-crud-temp",
             content="Временная запись для демонстрации CRUD-операций.",
             area="Тестовый район",
             area_slug="test-area",
+            category=category,
             noise_level=Spot.NoiseLevel.MEDIUM,
             status=Spot.PublicationStatus.DRAFT,
         )
+        spot.tags.add(tag)
+        SpotDetail.objects.update_or_create(
+            spot=spot,
+            defaults={
+                "seats": 10,
+                "has_wifi": True,
+                "avg_stay_minutes": 70,
+                "work_hours": "09:00-21:00",
+            },
+        )
         self.stdout.write(f"Создана запись id={spot.id}, slug={spot.slug}")
+
+        spot_2 = Spot.objects.create(
+            title="Тестовая локация ЛР7 (2)",
+            slug="lab7-crud-temp-2",
+            content="Вторая запись для демонстрации фильтрации и сортировки.",
+            area="Центр",
+            area_slug="center",
+            category=category,
+            noise_level=Spot.NoiseLevel.HIGH,
+            status=Spot.PublicationStatus.PUBLISHED,
+        )
+        spot_2.tags.add(tag)
+        SpotDetail.objects.update_or_create(
+            spot=spot_2,
+            defaults={
+                "seats": 6,
+                "has_wifi": True,
+                "avg_stay_minutes": 45,
+                "work_hours": "08:00-22:00",
+            },
+        )
+        self.stdout.write(f"Создана запись id={spot_2.id}, slug={spot_2.slug}")
 
         self.stdout.write(self.style.MIGRATE_HEADING("== DEMO: READ =="))
         fetched = Spot.objects.get(slug="lab7-crud-temp")
@@ -46,7 +88,17 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.MIGRATE_HEADING("== DEMO: DELETE =="))
-        deleted_count, _ = Spot.objects.filter(slug="lab7-crud-temp").delete()
-        self.stdout.write(f"Удалено записей: {deleted_count}")
+        deleted_count, deleted_map = Spot.objects.filter(
+            slug__in=["lab7-crud-temp", "lab7-crud-temp-2"]
+        ).delete()
+        self.stdout.write(
+            "Удалено записей Spot: "
+            f"{deleted_map.get('spots.Spot', 0)} (всего удалено объектов: {deleted_count})"
+        )
+
+        if not Spot.objects.filter(category=category).exists():
+            category.delete()
+        if not tag.spots.exists():
+            tag.delete()
 
         self.stdout.write(self.style.SUCCESS("CRUD-демонстрация завершена успешно."))

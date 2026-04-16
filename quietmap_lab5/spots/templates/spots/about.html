@@ -4,6 +4,12 @@
 {% block content %}
     <h2>{{ title }}</h2>
     <p>{{ project_description }}</p>
+    <ul class="recent-list">
+        <li><strong>ForeignKey:</strong> {{ relations_hint.fk }}</li>
+        <li><strong>ManyToManyField:</strong> {{ relations_hint.m2m }}</li>
+        <li><strong>OneToOneField:</strong> {{ relations_hint.o2o }}</li>
+    </ul>
     <p class="muted">Пример фильтра: "{{ title|lower }}"</p>
     {% show_recent_spots %}
+    {% show_all_tags 8 %}
 {% endblock %}

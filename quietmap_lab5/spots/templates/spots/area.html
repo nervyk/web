@@ -4,22 +4,49 @@
 {% block content %}
     <h2>{{ title }}</h2>
 
+    <form method="get" class="filters-form">
+        <label for="noise">Фильтр шума:</label>
+        <select id="noise" name="noise">
+            <option value="" {% if not filters.noise %}selected{% endif %}>Все</option>
+            <option value="low" {% if filters.noise == "low" %}selected{% endif %}>Низкий</option>
+            <option value="medium" {% if filters.noise == "medium" %}selected{% endif %}>Средний</option>
+            <option value="high" {% if filters.noise == "high" %}selected{% endif %}>Высокий</option>
+        </select>
+
+        <label for="tag">Тег:</label>
+        <select id="tag" name="tag">
+            <option value="" {% if not filters.tag %}selected{% endif %}>Все</option>
+            {% for tag in area_tags %}
+                <option value="{{ tag.slug }}" {% if filters.tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="sort">Сортировка:</label>
+        <select id="sort" name="sort">
+            <option value="new" {% if filters.sort == "new" %}selected{% endif %}>Сначала новые</option>
+            <option value="old" {% if filters.sort == "old" %}selected{% endif %}>Сначала старые</option>
+            <option value="title" {% if filters.sort == "title" %}selected{% endif %}>По названию</option>
+        </select>
+
+        <button type="submit">Применить</button>
+        <a href="{% url 'area' area_slug %}" class="reset-link">Сбросить</a>
+    </form>
+
     {% if filters.noise %}
         <p class="muted">Активный фильтр шума: {% noise_badge filters.noise %}</p>
     {% else %}
         <p class="muted">Фильтр шума не выбран.</p>
     {% endif %}
 
-    {% if filters.time %}
-        <p class="muted">Время посещения: {{ filters.time }}</p>
+    {% if filters.tag %}
+        <p class="muted">Тег: {{ filters.tag_name|default:filters.tag }}</p>
     {% endif %}
+
+    <p class="muted">Сортировка: {{ filters.sort_label }}</p>
 
     <ul class="cards">
         {% for spot in spots %}
-            <li class="card {{ spot.noise_level|noise_class }}">
-                <h3><a href="{{ spot.get_absolute_url }}">{{ spot.title }}</a></h3>
-                <p>{{ spot.content }}</p>
-            </li>
+            {% include "spots/includes/spot_card.html" with spot=spot %}
         {% empty %}
             <li class="card">По этому фильтру мест нет.</li>
         {% endfor %}

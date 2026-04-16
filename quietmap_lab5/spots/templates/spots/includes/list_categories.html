@@ -1,0 +1,13 @@
+<section class="recent">
+    <h3>Категории</h3>
+    <ul class="recent-list">
+        {% for category in categories %}
+            <li>
+                <a href="{{ category.get_absolute_url }}">{{ category.name }}</a>
+                <span class="muted">({{ category.total }})</span>
+            </li>
+        {% empty %}
+            <li class="muted">Категорий с местами нет.</li>
+        {% endfor %}
+    </ul>
+</section>

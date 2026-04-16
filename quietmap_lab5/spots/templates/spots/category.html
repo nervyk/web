@@ -1,0 +1,15 @@
+{% extends "spots/base.html" %}
+{% load spots_tags %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <p class="muted">Записей в категории: {{ spots|length }}</p>
+
+    <ul class="cards">
+        {% for spot in spots %}
+            {% include "spots/includes/spot_card.html" with spot=spot %}
+        {% empty %}
+            <li class="card">В этой категории пока нет опубликованных мест.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

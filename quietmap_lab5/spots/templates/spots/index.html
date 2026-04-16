@@ -3,8 +3,21 @@
 
 {% block content %}
     <h2>{{ title }}</h2>
-    <p class="muted">Всего мест: {{ stats.all }} | Районов: {{ stats.areas }}</p>
+    <p class="muted">
+        Всего мест: {{ stats.all }} | Районов: {{ stats.areas }} |
+        Категорий: {{ stats.categories }} | Тегов: {{ stats.tags }}
+    </p>
+
+    <form method="get" class="filters-form">
+        <label for="q">Поиск:</label>
+        <input id="q" name="q" type="text" value="{{ search_query }}" placeholder="Название, описание, тег, категория">
+        <button type="submit">Найти</button>
+        <a href="{% url 'home' %}" class="reset-link">Сбросить</a>
+    </form>
+
     {% show_recent_spots 3 %}
+    {% show_categories %}
+    {% show_all_tags %}
 
     <ul class="cards">
         {% for spot in spots %}
