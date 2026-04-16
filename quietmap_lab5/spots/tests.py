@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth import get_user_model
 from django.template import Context, Template
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -8,7 +9,7 @@ from django.utils import timezone
 from .models import Category, Spot, SpotDetail, Tag
 
 
-@override_settings(ALLOWED_HOSTS=["testserver", "localhost", "127.0.0.1"])
+@override_settings(ALLOWED_HOSTS=["testserver", "localhost", "127.0.0.1"], DEBUG=False)
 class SpotsViewsAndTemplatesTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -227,3 +228,54 @@ class SpotsViewsAndTemplatesTests(TestCase):
         )
         rendered = tpl.render(Context({"level": Spot.NoiseLevel.HIGH}))
         self.assertEqual(rendered, "noise-high|высокий")
+
+
+@override_settings(ALLOWED_HOSTS=["testserver", "localhost", "127.0.0.1"])
+class SpotsAdminTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="adminpass123",
+        )
+        cls.category = Category.objects.create(name="Центр", slug="center-admin")
+        cls.tag = Tag.objects.create(name="Коворкинг", slug="coworking-admin")
+        cls.spot = Spot.objects.create(
+            title="Админ тест",
+            slug="admin-test",
+            content="Запись для проверки админ-панели.",
+            area="Центр",
+            area_slug="center",
+            category=cls.category,
+            noise_level=Spot.NoiseLevel.MEDIUM,
+            status=Spot.PublicationStatus.DRAFT,
+        )
+        cls.spot.tags.add(cls.tag)
+        SpotDetail.objects.create(spot=cls.spot, seats=8, has_wifi=True)
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_spot_admin_changelist_has_custom_columns_and_filters(self):
+        response = self.client.get(reverse("admin:spots_spot_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Краткое описание")
+        self.assertContains(response, "Теги")
+        self.assertContains(response, "Детали места")
+        self.assertContains(response, "Комфорт по шуму")
+        self.assertContains(response, "Опубликовать выбранные места")
+
+    def test_spot_admin_custom_action_publishes_and_shows_message(self):
+        response = self.client.post(
+            reverse("admin:spots_spot_changelist"),
+            {
+                "action": "set_published",
+                "_selected_action": [str(self.spot.pk)],
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.spot.refresh_from_db()
+        self.assertEqual(self.spot.status, Spot.PublicationStatus.PUBLISHED)
+        self.assertContains(response, "Опубликовано записей: 1.")

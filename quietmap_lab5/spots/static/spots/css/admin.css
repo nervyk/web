@@ -1,0 +1,50 @@
+:root {
+    --primary: #164e3f;
+    --secondary: #2f6f61;
+    --accent: #d9b44a;
+    --primary-fg: #ffffff;
+    --body-bg: #f4f6f2;
+    --body-quiet-color: #52615a;
+    --link-fg: #0f5d4d;
+    --link-selected-fg: #123c34;
+}
+
+#header {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+
+#branding #site-name a {
+    color: var(--primary-fg);
+    font-weight: 700;
+}
+
+div.breadcrumbs {
+    background: var(--secondary);
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background: var(--secondary);
+}
+
+.button,
+input[type=submit],
+input[type=button],
+.submit-row input,
+a.button {
+    background: var(--primary);
+}
+
+.button.default,
+input[type=submit].default,
+.submit-row input.default {
+    background: #0f3f35;
+}
+
+.object-tools a:link,
+.object-tools a:visited {
+    background: var(--accent);
+    color: #1f2933;
+}

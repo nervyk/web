@@ -25,6 +25,12 @@ python manage.py runserver
 - `python manage.py demo_spot_crud` — CRUD (ЛР7)
 - `python manage.py demo_lab8_queries` — Q/F/Value, annotate, aggregate, группировка, DB functions (ЛР8)
 
+## ЛР9: админ-панель
+- `/admin/` — админ-панель Django
+- учебный суперпользователь: `root`
+- учебный пароль: `1234`
+- в админке настроены список мест, поиск, фильтры, пользовательские поля, действия и внешний вид
+
 ## Кастомный 404
 В `quietmap/settings.py` временно:
 - `DEBUG = False`
