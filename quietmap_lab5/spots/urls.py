@@ -7,6 +7,10 @@ register_converter(converters.FourDigitYearConverter, "year4")
 urlpatterns = [
     path("", views.index, name="home"),
     path("about/", views.about, name="about"),
+    path("forms/", views.forms_hub, name="forms_hub"),
+    path("forms/manual/", views.plain_spot_add, name="plain_spot_add"),
+    path("forms/model/", views.model_spot_add, name="model_spot_add"),
+    path("forms/upload/", views.upload_file, name="upload_file"),
     path("spots/<slug:spot_slug>/", views.spot_detail, name="spot_detail"),
     path("categories/<slug:category_slug>/", views.category, name="category"),
     path("tags/", views.tags_index, name="tags_index"),

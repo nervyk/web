@@ -1,0 +1,32 @@
+{% extends "spots/base.html" %}
+
+{% block content %}
+    <section class="hero-panel">
+        <h2>{{ title }}</h2>
+        <p class="muted">
+            Файлы загружаются на сервер со случайными именами, поэтому одинаковые исходные имена не конфликтуют между собой.
+        </p>
+    </section>
+
+    <section class="form-card">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include "spots/includes/render_form.html" %}
+            <div class="form-actions">
+                <button type="submit">{{ submit_label }}</button>
+            </div>
+        </form>
+    </section>
+
+    {% if uploaded_file_data %}
+        <section class="recent">
+            <h3>Последний загруженный файл</h3>
+            <p>Исходное имя: <strong>{{ uploaded_file_data.original_name }}</strong></p>
+            <p>Сохраненный путь: <code>{{ uploaded_file_data.saved_path }}</code></p>
+            {% if uploaded_file_data.description %}
+                <p>Комментарий: {{ uploaded_file_data.description }}</p>
+            {% endif %}
+            <p><a href="{{ uploaded_file_data.url }}" target="_blank" rel="noopener">Открыть загруженный файл</a></p>
+        </section>
+    {% endif %}
+{% endblock %}

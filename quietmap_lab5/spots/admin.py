@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.db.models import Count
+from django.utils.html import format_html
 
 from .models import Category, Spot, SpotDetail, Tag
 
@@ -34,6 +35,7 @@ class SpotDetailInline(admin.StackedInline):
 class SpotAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "photo_preview",
         "category",
         "area",
         "noise_level",
@@ -53,13 +55,13 @@ class SpotAdmin(admin.ModelAdmin):
     list_select_related = ("category",)
     prepopulated_fields = {"slug": ("title",), "area_slug": ("area",)}
     filter_horizontal = ("tags",)
-    readonly_fields = ("time_create", "time_update")
+    readonly_fields = ("photo_preview", "time_create", "time_update")
     save_on_top = True
     actions = ("set_published", "set_draft")
     inlines = (SpotDetailInline,)
     fieldsets = (
         ("Основная информация", {
-            "fields": ("title", "slug", "content", "category", "tags"),
+            "fields": ("title", "slug", "content", "photo", "photo_preview", "category", "tags"),
         }),
         ("Расположение и параметры", {
             "fields": ("area", "area_slug", "noise_level", "status"),
@@ -77,6 +79,15 @@ class SpotAdmin(admin.ModelAdmin):
     @admin.display(description="Краткое описание", ordering="content")
     def brief_info(self, spot):
         return f"{len(spot.content)} символов"
+
+    @admin.display(description="Фото")
+    def photo_preview(self, spot):
+        if not spot.photo:
+            return "Без фото"
+        return format_html(
+            "<img src='{}' width='68' height='48' style='object-fit: cover; border-radius: 8px;'>",
+            spot.photo.url,
+        )
 
     @admin.display(description="Теги")
     def tag_list(self, spot):

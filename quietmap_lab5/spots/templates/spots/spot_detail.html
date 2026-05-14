@@ -4,6 +4,11 @@
 {% block content %}
     <article class="spot-card {{ spot.noise_level|noise_class }}">
         <h2>{{ spot.title }}</h2>
+        {% if spot.photo %}
+            <p class="spot-media">
+                <img class="spot-photo-large" src="{{ spot.photo.url }}" alt="{{ spot.title }}">
+            </p>
+        {% endif %}
         <p>{{ spot.content }}</p>
         <p>Уровень шума: {% noise_badge spot.noise_level %}</p>
         <p>Район: <a href="{% url 'area' spot.area_slug %}">{{ spot.area }}</a></p>

@@ -1,11 +1,18 @@
 from datetime import timedelta
+from io import StringIO
+from pathlib import Path
+import tempfile
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.template import Context, Template
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
+from .forms import SpotModelForm, SpotPlainForm
 from .models import Category, Spot, SpotDetail, Tag
 
 
@@ -279,3 +286,199 @@ class SpotsAdminTests(TestCase):
         self.spot.refresh_from_db()
         self.assertEqual(self.spot.status, Spot.PublicationStatus.PUBLISHED)
         self.assertContains(response, "Опубликовано записей: 1.")
+
+
+class DemoLab8QueriesCommandTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.category, _ = Category.objects.get_or_create(
+            slug="study",
+            defaults={"name": "Для учебы"},
+        )
+        cls.tag_quiet, _ = Tag.objects.get_or_create(
+            slug="noise-low",
+            defaults={"name": "Низкий шум"},
+        )
+        cls.tag_coworking, _ = Tag.objects.get_or_create(
+            slug="coworking",
+            defaults={"name": "Коворкинг"},
+        )
+
+        cls.spot_1 = Spot.objects.create(
+            title="Читальный зал у воды",
+            slug="lab8-spot-1",
+            content="Тихое место для чтения и работы.",
+            area="Набережная",
+            area_slug="naberezhnaya",
+            category=cls.category,
+            noise_level=Spot.NoiseLevel.LOW,
+            status=Spot.PublicationStatus.PUBLISHED,
+        )
+        cls.spot_1.tags.add(cls.tag_quiet)
+        SpotDetail.objects.create(
+            spot=cls.spot_1,
+            seats=16,
+            has_wifi=True,
+            avg_stay_minutes=100,
+            work_hours="08:00-22:00",
+        )
+
+        cls.spot_2 = Spot.objects.create(
+            title="Коворкинг на Красном",
+            slug="lab8-spot-2",
+            content="Подходит для коротких задач и встреч.",
+            area="Центр",
+            area_slug="center",
+            category=cls.category,
+            noise_level=Spot.NoiseLevel.HIGH,
+            status=Spot.PublicationStatus.PUBLISHED,
+        )
+        cls.spot_2.tags.add(cls.tag_coworking)
+        SpotDetail.objects.create(
+            spot=cls.spot_2,
+            seats=8,
+            has_wifi=True,
+            avg_stay_minutes=55,
+            work_hours="09:00-21:00",
+        )
+
+        now = timezone.now()
+        Spot.objects.filter(pk=cls.spot_1.pk).update(time_update=now - timedelta(days=2))
+        Spot.objects.filter(pk=cls.spot_2.pk).update(time_update=now - timedelta(days=1))
+
+    def test_demo_lab8_queries_outputs_selection_methods_and_orm_blocks(self):
+        out = StringIO()
+        call_command("demo_lab8_queries", stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("== SELECTION METHODS ==", output)
+        self.assertIn("get(slug='", output)
+        self.assertIn("order_by('pk').first()", output)
+        self.assertIn("order_by('pk').last()", output)
+        self.assertIn("earliest('time_update')", output)
+        self.assertIn("latest('time_update')", output)
+        self.assertIn("== Q FILTER ==", output)
+        self.assertIn("== F FILTER ==", output)
+        self.assertIn("== VALUE + ANNOTATE ==", output)
+        self.assertIn("== CALCULATED FIELDS + DB FUNCTION ==", output)
+        self.assertIn("== AGGREGATE ==", output)
+        self.assertIn("== GROUP BY CATEGORY ==", output)
+        self.assertIn("== VALUES FROM RELATED TABLES ==", output)
+        self.assertIn("== EXISTS / COUNT ==", output)
+
+
+class SpotsFormsAndUploadsTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.category = Category.objects.create(name="Для работы", slug="work-form")
+        cls.tag_focus = Tag.objects.create(name="Фокус", slug="focus-form")
+        cls.tag_wifi = Tag.objects.create(name="Wi-Fi", slug="wifi-form")
+
+    def make_image_file(self, name="spot.png", size=(60, 40), color=(32, 120, 96)):
+        # PIL requires binary stream, so create a BytesIO locally.
+        from io import BytesIO
+
+        data = BytesIO()
+        image = Image.new("RGB", size, color)
+        image.save(data, format="PNG")
+        return SimpleUploadedFile(name, data.getvalue(), content_type="image/png")
+
+    def plain_form_payload(self, **overrides):
+        payload = {
+            "title": "Новая тихая локация",
+            "slug": "novaya-tihaya-lokaciya",
+            "content": "Подробное описание тихого места для лабораторной работы 10.",
+            "area": "Академгородок",
+            "area_slug": "akademgorodok",
+            "category": str(self.category.pk),
+            "noise_level": str(Spot.NoiseLevel.LOW),
+            "status": str(Spot.PublicationStatus.PUBLISHED),
+            "tags": [str(self.tag_focus.pk), str(self.tag_wifi.pk)],
+            "seats": "18",
+            "has_wifi": "on",
+            "avg_stay_minutes": "110",
+            "work_hours": "09:00-21:00",
+        }
+        payload.update(overrides)
+        return payload
+
+    def model_form_payload(self, **overrides):
+        payload = {
+            "title": "Форма модели тихого места",
+            "slug": "forma-modeli-tihogo-mesta",
+            "content": "Детальное описание места, созданного через ModelForm в лабораторной работе 10.",
+            "area": "Левый берег",
+            "area_slug": "leviy-bereg",
+            "category": str(self.category.pk),
+            "noise_level": str(Spot.NoiseLevel.MEDIUM),
+            "status": str(Spot.PublicationStatus.PUBLISHED),
+            "tags": [str(self.tag_focus.pk)],
+            "seats": "14",
+            "has_wifi": "on",
+            "avg_stay_minutes": "85",
+            "work_hours": "08:30-20:00",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_plain_form_custom_validator_rejects_placeholder_title(self):
+        form = SpotPlainForm(data=self.plain_form_payload(title="Тестовое место"))
+        self.assertFalse(form.is_valid())
+        self.assertIn("служебные слова", form.errors["title"][0])
+
+    def test_plain_form_valid_post_creates_spot_and_detail(self):
+        response = self.client.post(reverse("plain_spot_add"), data=self.plain_form_payload())
+        self.assertEqual(response.status_code, 302)
+        spot = Spot.objects.get(slug="novaya-tihaya-lokaciya")
+        self.assertEqual(spot.category, self.category)
+        self.assertEqual(spot.tags.count(), 2)
+        self.assertTrue(SpotDetail.objects.filter(spot=spot, seats=18, has_wifi=True).exists())
+
+    def test_upload_file_view_saves_same_original_name_as_different_random_files(self):
+        with tempfile.TemporaryDirectory() as media_root:
+            with self.settings(MEDIA_ROOT=media_root, MEDIA_URL="/media/"):
+                response_1 = self.client.post(
+                    reverse("upload_file"),
+                    data={
+                        "description": "Первый файл",
+                        "file": SimpleUploadedFile("notes.txt", b"first", content_type="text/plain"),
+                    },
+                )
+                response_2 = self.client.post(
+                    reverse("upload_file"),
+                    data={
+                        "description": "Второй файл",
+                        "file": SimpleUploadedFile("notes.txt", b"second", content_type="text/plain"),
+                    },
+                )
+
+                upload_dir = Path(media_root) / "uploads" / "raw"
+                files = sorted(upload_dir.glob("*"))
+                self.assertEqual(response_1.status_code, 200)
+                self.assertEqual(response_2.status_code, 200)
+                self.assertEqual(len(files), 2)
+                self.assertNotEqual(files[0].name, files[1].name)
+
+    def test_model_form_custom_validator_rejects_one_word_title(self):
+        form = SpotModelForm(data=self.model_form_payload(title="Одиночка"))
+        self.assertFalse(form.is_valid())
+        self.assertIn("не менее двух слов", form.errors["title"][0])
+
+    def test_model_form_valid_post_creates_spot_with_photo_and_renders_it(self):
+        with tempfile.TemporaryDirectory() as media_root:
+            with self.settings(MEDIA_ROOT=media_root, MEDIA_URL="/media/"):
+                response = self.client.post(
+                    reverse("model_spot_add"),
+                    data={
+                        **self.model_form_payload(),
+                        "photo": self.make_image_file(),
+                    },
+                )
+
+                self.assertEqual(response.status_code, 302)
+                spot = Spot.objects.get(slug="forma-modeli-tihogo-mesta")
+                self.assertTrue(spot.photo.name.startswith("spots/photos/"))
+                self.assertTrue((Path(media_root) / spot.photo.name).exists())
+                detail_response = self.client.get(reverse("spot_detail", args=(spot.slug,)))
+                self.assertEqual(detail_response.status_code, 200)
+                self.assertContains(detail_response, spot.photo.url)

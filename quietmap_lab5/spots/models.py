@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
 
+from .uploads import spot_photo_upload_to
+
 
 class PublishedSpotManager(models.Manager):
     def get_queryset(self):
@@ -54,6 +56,12 @@ class Spot(models.Model):
     title = models.CharField(max_length=255, verbose_name="Название места")
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
     content = models.TextField(blank=True, verbose_name="Описание")
+    photo = models.ImageField(
+        upload_to=spot_photo_upload_to,
+        blank=True,
+        null=True,
+        verbose_name="Фотография",
+    )
     area = models.CharField(max_length=120, verbose_name="Район")
     area_slug = models.SlugField(max_length=120, db_index=True)
     category = models.ForeignKey(

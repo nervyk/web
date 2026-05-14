@@ -18,6 +18,13 @@
 </header>
 
 <main class="container">
+    {% if messages %}
+        <section class="messages">
+            {% for message in messages %}
+                <div class="message message-{{ message.tags|default:'info' }}">{{ message }}</div>
+            {% endfor %}
+        </section>
+    {% endif %}
     {% block content %}{% endblock %}
 </main>
 

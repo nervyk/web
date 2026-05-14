@@ -1,0 +1,20 @@
+{% extends "spots/base.html" %}
+
+{% block content %}
+    <section class="hero-panel">
+        <h2>{{ title }}</h2>
+        <p class="muted">
+            Эта форма связана с моделью Spot и дополнительно принимает изображение, которое будет сохранено в `media`.
+        </p>
+    </section>
+
+    <section class="form-card">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include "spots/includes/render_form.html" %}
+            <div class="form-actions">
+                <button type="submit">{{ submit_label }}</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

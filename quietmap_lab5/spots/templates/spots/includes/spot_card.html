@@ -1,5 +1,10 @@
 {% load spots_tags %}
 <li class="card {{ spot.noise_level|noise_class }}">
+    {% if spot.photo %}
+        <p class="spot-media">
+            <img class="spot-thumb" src="{{ spot.photo.url }}" alt="{{ spot.title }}">
+        </p>
+    {% endif %}
     <h3><a href="{{ spot.get_absolute_url }}">{{ spot.title|title }}</a></h3>
     <p>{{ spot.content|truncatechars:85 }}</p>
     <p>Шум: {% noise_badge spot.noise_level %}</p>

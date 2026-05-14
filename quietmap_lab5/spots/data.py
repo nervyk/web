@@ -3,6 +3,7 @@ from datetime import datetime
 MENU = [
     {"title": "Главная", "url_name": "home"},
     {"title": "Теги", "url_name": "tags_index"},
+    {"title": "Формы", "url_name": "forms_hub"},
     {"title": "О проекте", "url_name": "about"},
 ]
 

@@ -1,9 +1,13 @@
+from django.conf import settings
+from django.contrib import messages
 from django.http import Http404
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 
 from .data import build_base_context, get_current_year
+from .forms import SpotModelForm, SpotPlainForm, UploadFileForm
 from .models import Category, Spot, Tag
+from .uploads import save_uploaded_file
 
 NOISE_QUERY_MAP = {
     "low": Spot.NoiseLevel.LOW,
@@ -59,6 +63,101 @@ def about(request):
         "o2o": "Spot -> SpotDetail (OneToOneField)",
     }
     return render(request, "spots/about.html", data)
+
+
+def forms_hub(request):
+    data = build_base_context("Формы ЛР10")
+    data["form_cards"] = [
+        {
+            "title": "Обычная форма",
+            "description": "Форма без привязки к модели. Запись Spot создается вручную в коде представления.",
+            "url_name": "plain_spot_add",
+        },
+        {
+            "title": "ModelForm",
+            "description": "Форма, связанная с моделью Spot, с загрузкой изображения и сохранением записи в БД.",
+            "url_name": "model_spot_add",
+        },
+        {
+            "title": "Загрузка файлов",
+            "description": "Отдельная форма для загрузки файлов на сервер со случайными именами.",
+            "url_name": "upload_file",
+        },
+    ]
+    return render(request, "spots/forms_hub.html", data)
+
+
+def plain_spot_add(request):
+    if request.method == "POST":
+        form = SpotPlainForm(request.POST)
+        if form.is_valid():
+            spot = form.save()
+            messages.success(
+                request,
+                f"Обычная форма успешно создала запись «{spot.title}».",
+            )
+            if spot.status == Spot.PublicationStatus.PUBLISHED:
+                return redirect(spot.get_absolute_url())
+            return redirect("home")
+    else:
+        form = SpotPlainForm()
+
+    data = build_base_context("Обычная форма добавления места")
+    data["form"] = form
+    data["submit_label"] = "Создать запись вручную"
+    data["form_mode"] = "plain"
+    return render(request, "spots/spot_form_plain.html", data)
+
+
+def model_spot_add(request):
+    if request.method == "POST":
+        form = SpotModelForm(request.POST, request.FILES)
+        if form.is_valid():
+            spot = form.save()
+            messages.success(
+                request,
+                f"ModelForm успешно сохранила запись «{spot.title}».",
+            )
+            if spot.status == Spot.PublicationStatus.PUBLISHED:
+                return redirect(spot.get_absolute_url())
+            return redirect("home")
+    else:
+        form = SpotModelForm()
+
+    data = build_base_context("ModelForm для добавления места")
+    data["form"] = form
+    data["submit_label"] = "Сохранить через ModelForm"
+    data["form_mode"] = "model"
+    return render(request, "spots/spot_form_model.html", data)
+
+
+def upload_file(request):
+    uploaded_file_data = None
+
+    if request.method == "POST":
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            original_name = form.cleaned_data["file"].name
+            relative_path = save_uploaded_file(form.cleaned_data["file"])
+            uploaded_file_data = {
+                "original_name": original_name,
+                "saved_path": relative_path,
+                "url": f"{settings.MEDIA_URL}{relative_path}",
+                "description": form.cleaned_data["description"],
+            }
+            messages.success(
+                request,
+                f"Файл «{original_name}» сохранен как «{relative_path}».",
+            )
+            form = UploadFileForm()
+    else:
+        form = UploadFileForm()
+
+    data = build_base_context("Загрузка файлов")
+    data["form"] = form
+    data["uploaded_file_data"] = uploaded_file_data
+    data["submit_label"] = "Загрузить файл"
+    return render(request, "spots/upload_file.html", data)
 
 
 def spot_detail(request, spot_slug: str):
